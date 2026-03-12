@@ -29,7 +29,27 @@ body{
 }
 header{
     display: flex;
+    padding: 40px 0 30px;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     width: 100%;
+}
+.logo{
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+.logo i{
+    background-color: #4b392c;
+    height: 45px;
+    width: 45px;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.5rem;;
+    padding: 10px;
+    margin-right: 5px;
+    cursor: pointer;
+    text-align: center;
 }
