@@ -1,38 +1,638 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv ="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Responsive Portfolio Website Design</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & tokens ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* ── Green palette ── */
+      --accent:        #4caf7d;
+      --accent-bright: #6fcf97;
+      --accent-dim:    rgba(76, 175, 125, 0.18);
+      --accent-border: rgba(76, 175, 125, 0.28);
+
+      /* ── Glass: dark forest tint for contrast on bright bg ── */
+      --glass-bg:      rgba(8, 24, 14, 0.58);
+      --glass-border:  rgba(76, 175, 125, 0.22);
+      --blur:          22px;
+
+      /* ── Text ── */
+      --text:          #f0f7f2;
+      --text-muted:    rgba(220, 240, 228, 0.62);
+
+      /* ── Sidebar ── */
+      --sidebar-bg:    rgba(8, 24, 14, 0.70);
+
+      /* ── Layout ── */
+      --nav-w:         64px;
+      --nav-w-open:    224px;
+      --panel-w:       min(700px, 90vw);
+      --radius:        22px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: #0b1a10;
+    }
+
+    /* ── Background image ── */
+    #bg-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+    #bg-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+    /* subtle vignette on edges to help glass panel pop */
+    #bg-wrap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 60% 100% at 50% 50%,
+        transparent 30%,
+        rgba(8, 24, 14, 0.20) 100%
+      );
+    }
+
+    /* ── Layout shell ── */
+    #root {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ════════════════════════════════
+       LEFT NAV SIDEBAR
+    ════════════════════════════════ */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      width: var(--nav-w);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 28px;
+      z-index: 100;
+      background: var(--sidebar-bg);
+      backdrop-filter: blur(16px) saturate(1.4);
+      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+      border-right: 1px solid var(--glass-border);
+      transition: width 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+    .sidebar.open { width: var(--nav-w-open); }
+
+    /* hamburger / arrow toggle button */
+    .nav-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      position: relative;
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+    .bar {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: transform 0.36s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity  0.25s ease,
+                  width    0.36s ease,
+                  top      0.36s cubic-bezier(0.4, 0, 0.2, 1),
+                  height   0.36s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: center;
+      position: absolute;
+    }
+    .bar-1 { top: 9px;  }
+    .bar-2 { top: 19px; }
+    .bar-3 { top: 29px; }
+
+    /* Open state → ↓ arrow: bar-2 becomes vertical stem, bar-1 & bar-3 become diagonal wings */
+    .nav-toggle.open .bar-1 {
+      top: 26px;
+      width: 12px;
+      transform: translateX(3px) rotate(45deg);
+    }
+    .nav-toggle.open .bar-2 {
+      top: 10px;
+      height: 18px;
+      transform: none;
+    }
+    .nav-toggle.open .bar-3 {
+      top: 26px;
+      width: 12px;
+      transform: translateX(-3px) rotate(-45deg);
+    }
+
+    /* nav links */
+    .nav-links {
+      display: flex;
+      flex-direction: column;
+      margin-top: 32px;
+      width: 100%;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0 12px 20px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-left: 2px solid transparent;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--accent-bright);
+      border-left-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .nav-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+      width: 24px;
+      text-align: center;
+    }
+    .nav-label {
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.22s ease 0.08s, transform 0.22s ease 0.08s;
+      pointer-events: none;
+    }
+    .sidebar.open .nav-label {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ════════════════════════════════
+       MAIN SCROLL AREA
+    ════════════════════════════════ */
+    .main {
+      margin-left: var(--nav-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 28px 60px;
+      transition: margin-left 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sidebar.open ~ .main { margin-left: var(--nav-w-open); }
+
+    /* ── Glass panel ── */
+    .glass-panel {
+      width: var(--panel-w);
+      background: var(--glass-bg);
+      backdrop-filter: blur(var(--blur)) saturate(1.5) brightness(0.95);
+      -webkit-backdrop-filter: blur(var(--blur)) saturate(1.5) brightness(0.95);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 60px 56px;
+      margin: 52px 0;
+      box-shadow:
+        0 4px 6px  rgba(0,0,0,0.06),
+        0 12px 40px rgba(0,0,0,0.26),
+        0 32px 80px rgba(0,0,0,0.16),
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        inset 0 -1px 0 rgba(0,0,0,0.10);
+    }
+
+    /* ── Section spacing ── */
+    .section { margin-bottom: 68px; }
+    .section:last-child { margin-bottom: 0; }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--glass-border) 30%, var(--glass-border) 70%, transparent);
+      margin: 52px 0;
+    }
+
+    /* ── Typography ── */
+    .eyebrow {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent-bright);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .eyebrow::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--accent-border);
+      max-width: 60px;
+    }
+
+    .display-name {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.8rem, 5.5vw, 4rem);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .display-subtitle {
+      font-size: 0.88rem;
+      font-weight: 400;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 26px;
+    }
+    .lead {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--text-muted);
+      max-width: 52ch;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.55rem, 2.8vw, 2rem);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text);
+      margin-bottom: 18px;
+    }
+    p {
+      font-size: 0.96rem;
+      line-height: 1.82;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── Project cards ── */
+    .project-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 10px;
+    }
+    @media (max-width: 540px) { .project-grid { grid-template-columns: 1fr; } }
+
+    .project-card {
+      background: rgba(8, 24, 14, 0.38);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 22px 20px;
+      transition: background 0.22s, transform 0.22s, border-color 0.22s;
+      cursor: default;
+    }
+    .project-card:hover {
+      background: rgba(76, 175, 125, 0.10);
+      border-color: rgba(76, 175, 125, 0.42);
+      transform: translateY(-4px);
+    }
+    .project-tag {
+      display: inline-block;
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-bright);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 6px;
+      padding: 3px 9px;
+      margin-bottom: 12px;
+    }
+    .project-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .project-desc {
+      font-size: 0.84rem;
+      line-height: 1.68;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* ── Skills ── */
+    .skill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 6px;
+    }
+    .skill-chip {
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted);
+      background: rgba(76, 175, 125, 0.06);
+      transition: color 0.18s, border-color 0.18s, background 0.18s;
+      cursor: default;
+    }
+    .skill-chip:hover {
+      color: var(--accent-bright);
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* ── CTA button ── */
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 30px;
+      padding: 13px 30px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent) 0%, #3a9e6c 100%);
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      box-shadow: 0 4px 18px rgba(76, 175, 125, 0.35);
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .cta-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(76, 175, 125, 0.45);
+    }
+
+    /* ── Scroll fade-in ── */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fade-in { opacity: 1; transform: none; transition: none; }
+      .bar, .nav-label, .sidebar, .main { transition: none; }
+    }
+
+    @media (max-width: 640px) {
+      .glass-panel { padding: 36px 26px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="hero-header">
-        <div class="wrapper">
-            <header>
-                <div class="logo">
-                    <i class="fa-solid fa-b"></i>
-                    <div class="logo-text">Brooke Brown
-                    </div>
-                </div>
-                <nav>
-                    <div class="togglebtn">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                    <ul class="navlinks">
-                        <li><a href="#home">Home</a></li>
-                        <li><a href="#portfolio">Portfolio</a></li>
-                        <li><a href="#resume">Resume</a></li>
-                        <li><a href="#contact">Contact</a></li>
-                    </ul>
-                </nav>
-            </header>
+
+<div id="bg-wrap">
+  <img src="background.png" alt="" aria-hidden="true" />
+</div>
+
+<div id="root"></div>
+
+<!-- React + Babel via CDN (no build step needed) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+  const { useState, useEffect, useRef } = React;
+
+  /* ─── Nav config ─── */
+  const NAV_ITEMS = [
+    { id: 'hero',     label: 'Home',     icon: '⌂' },
+    { id: 'about',    label: 'About',    icon: '○' },
+    { id: 'projects', label: 'Projects', icon: '◈' },
+    { id: 'skills',   label: 'Skills',   icon: '◇' },
+    { id: 'contact',  label: 'Contact',  icon: '✉' },
+  ];
+
+  /* ─── Sidebar ─── */
+  function Sidebar({ open, onToggle, activeSection }) {
+    const scrollTo = (id) => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    };
+    return (
+      <nav className={`sidebar${open ? ' open' : ''}`} aria-label="Page navigation">
+        <button
+          className={`nav-toggle${open ? ' open' : ''}`}
+          onClick={onToggle}
+          aria-expanded={open}
+          aria-label={open ? 'Close menu' : 'Open menu'}
+        >
+          <span className="bar bar-1" />
+          <span className="bar bar-2" />
+          <span className="bar bar-3" />
+        </button>
+
+        <div className="nav-links" role="list">
+          {NAV_ITEMS.map(item => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className={`nav-link${activeSection === item.id ? ' active' : ''}`}
+              onClick={(e) => { e.preventDefault(); scrollTo(item.id); }}
+              role="listitem"
+              aria-current={activeSection === item.id ? 'page' : undefined}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label}</span>
+            </a>
+          ))}
         </div>
-    </div>
+      </nav>
+    );
+  }
+
+  /* ─── Fade-in wrapper ─── */
+  function FadeIn({ children, delay = 0 }) {
+    const ref = useRef(null);
+    useEffect(() => {
+      const el = ref.current;
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) { el.classList.add('visible'); obs.disconnect(); } },
+        { threshold: 0.12 }
+      );
+      obs.observe(el);
+      return () => obs.disconnect();
+    }, []);
+    return (
+      <div ref={ref} className="fade-in" style={{ transitionDelay: `${delay}ms` }}>
+        {children}
+      </div>
+    );
+  }
+
+  /* ─── Main App ─── */
+  function App() {
+    const [navOpen, setNavOpen]       = useState(false);
+    const [activeSection, setActive]  = useState('hero');
+
+    /* Track active section via IntersectionObserver */
+    useEffect(() => {
+      const sections = NAV_ITEMS.map(n => document.getElementById(n.id)).filter(Boolean);
+      const obs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(e => { if (e.isIntersecting) setActive(e.target.id); });
+        },
+        { threshold: 0.4 }
+      );
+      sections.forEach(s => obs.observe(s));
+      return () => obs.disconnect();
+    }, []);
+
+    /* Close nav on outside click */
+    useEffect(() => {
+      if (!navOpen) return;
+      const handler = (e) => {
+        if (!e.target.closest('.sidebar')) setNavOpen(false);
+      };
+      document.addEventListener('click', handler);
+      return () => document.removeEventListener('click', handler);
+    }, [navOpen]);
+
+    return (
+      <>
+        <Sidebar open={navOpen} onToggle={() => setNavOpen(o => !o)} activeSection={activeSection} />
+
+        <main className="main">
+          <div className="glass-panel">
+
+            {/* ── Hero ── */}
+            <section id="hero" className="section">
+              <FadeIn>
+                <p className="display-subtitle">Full-Stack Developer &amp; Designer</p>
+                <h1 className="display-name">Your Name Here</h1>
+                <p className="lead">
+                  I build thoughtful digital experiences — from polished interfaces
+                  to robust back-end systems. Based in Norfolk, VA, open to remote.
+                </p>
+              </FadeIn>
+            </section>
+
+            <div className="divider" />
+
+            {/* ── About ── */}
+            <section id="about" className="section">
+              <FadeIn>
+                <p className="eyebrow">About</p>
+                <h2>Crafting with intention</h2>
+                <p>
+                  A bit about who you are and what drives your work. Share your background,
+                  what you care about, and the kind of problems you love solving. Keep it
+                  personal — this is what separates a portfolio from a résumé.
+                </p>
+                <p>
+                  Replace this placeholder copy with your own story.
+                </p>
+              </FadeIn>
+            </section>
+
+            <div className="divider" />
+
+            {/* ── Projects ── */}
+            <section id="projects" className="section">
+              <FadeIn>
+                <p className="eyebrow">Projects</p>
+                <h2>Selected work</h2>
+              </FadeIn>
+              <div className="project-grid">
+                {[
+                  { tag: 'Web App', name: 'Project One', desc: 'Short description of what this project does and why it matters.' },
+                  { tag: 'Mobile',  name: 'Project Two', desc: 'Short description of what this project does and why it matters.' },
+                  { tag: 'API',     name: 'Project Three', desc: 'Short description of what this project does and why it matters.' },
+                  { tag: 'Design',  name: 'Project Four', desc: 'Short description of what this project does and why it matters.' },
+                ].map((p, i) => (
+                  <FadeIn key={p.name} delay={i * 80}>
+                    <div className="project-card">
+                      <span className="project-tag">{p.tag}</span>
+                      <p className="project-name">{p.name}</p>
+                      <p className="project-desc">{p.desc}</p>
+                    </div>
+                  </FadeIn>
+                ))}
+              </div>
+            </section>
+
+            <div className="divider" />
+
+            {/* ── Skills ── */}
+            <section id="skills" className="section">
+              <FadeIn>
+                <p className="eyebrow">Skills</p>
+                <h2>Tools &amp; technologies</h2>
+                <div className="skill-list">
+                  {['React', 'JavaScript', 'TypeScript', 'Node.js', 'Python',
+                    'CSS / Tailwind', 'Git', 'Figma', 'REST APIs', 'SQL'].map(s => (
+                    <span key={s} className="skill-chip">{s}</span>
+                  ))}
+                </div>
+              </FadeIn>
+            </section>
+
+            <div className="divider" />
+
+            {/* ── Contact ── */}
+            <section id="contact" className="section">
+              <FadeIn>
+                <p className="eyebrow">Contact</p>
+                <h2>Let's work together</h2>
+                <p>
+                  Have a project in mind or just want to connect? Reach out — I'm always
+                  happy to chat about interesting problems.
+                </p>
+                <a href="mailto:you@example.com" className="cta-btn">
+                  ✉ &nbsp;Get in touch
+                </a>
+              </FadeIn>
+            </section>
+
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
 </body>
 </html>
